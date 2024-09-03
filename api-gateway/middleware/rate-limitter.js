@@ -6,3 +6,5 @@ const apiLimit=rateLimit({
     max: isProduction ? 100 : 1000,
     message: 'Too many requests from this IP, please try again later'
 })
+
+module.exports=apiLimit
