@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const { createProxyMiddleware,fixRequestBody } = require('http-proxy-middleware');
 const PORT = process.env.PORT;
+const rateLimiter=require('./middleware/rate-limitter');
 
 app.use(express.json());
 
@@ -19,6 +20,7 @@ const CART_SERVICE = 'http://localhost:5003';
 const ORDER_SERVICE = 'http://localhost:5004';
 const PAYMENT_SERVICE = 'http://localhost:5005';
 
+app.use(rateLimiter);
 app.use(
   '/api/auth',
   createProxyMiddleware({
