@@ -2,7 +2,9 @@ require('dotenv').config()
 const express=require('express');
 const app=express();
 const cors=require('cors');
+const cookieParser=require('cookie-parser');
 const mongoose=require('mongoose');
+const prodRoutes=require('./routes/productRoutes');
 const PORT=process.env.PORT
 
 app.use(express.json());
@@ -30,7 +32,7 @@ const connectToDB=()=>{
     }
 }
 connectToDB();
-
+app.use(prodRoutes);
 
 
 app.listen(PORT,()=>{
