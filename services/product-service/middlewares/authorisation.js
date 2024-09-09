@@ -1,21 +1,27 @@
-const jwt=require('jsonwebtoken');
-
-const authorisation=(req,res,next)=>{
-    const token=req.cookies.jwt;
-    if(token){
-        const decoded=jwt.verify(token,process.env.SECRET);
-        if(decoded.role==='admin'){
-            next();
-        }
-        else return res.status(400).json({
-            message:"You are not authorised for this"
-        })
+const authorisation = async (req, res, next) => { 
+  try {
+    const response = await fetch('http://localhost:5001/verify', {
+      method: 'GET',
+      credentials: 'include',
+      headers:{
+        'Authorization': `Bearer ${req.cookies.jwt}`, 
+      }
+    });
+    if (response) {
+      const data=await response.json();
+      req.user = data;
+      next();
+    } else {
+      return res.status(400).json({
+        message: 'Token verification failed',
+      });
     }
-    else{
-        return res.status(400).json({
-            message:"Login/SignUp first"
-        })
-    }
-}
+  } catch (err) {
+    console.error(err);
+     return res.status(400).json({
+      message: 'Authorisation Failed!!',
+    });
+  }
+};
 
-module.exports=authorisation
+module.exports = authorisation;
