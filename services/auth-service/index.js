@@ -8,12 +8,12 @@ const PORT=process.env.PORT;
 const authRoutes=require('./routes/authRoutes');
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(cors({
     origin: '*',
     credentials: true
   }));
-app.use(cookieParser());
 
 app.get('/info',(req,res)=>{
     res.json({

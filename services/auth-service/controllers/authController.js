@@ -19,8 +19,8 @@ module.exports.registerUser = async (req, res) => {
     return res.status(400).json({ message: 'Please provide all user details' });
   }
   try {
-    let lowercaseGender=gender.toLowerCase();
-    let lowercaseRole=role.toLowerCase();
+    let lowercaseGender = gender.toLowerCase();
+    let lowercaseRole = role.toLowerCase();
     const userExists = await user.findOne({ $or: [{ username }, { email }] });
     if (userExists) {
       console.log('try different details');
@@ -35,8 +35,8 @@ module.exports.registerUser = async (req, res) => {
         password: hashedPass,
         email,
         age,
-        gender:lowercaseGender,
-        role:lowercaseRole,
+        gender: lowercaseGender,
+        role: lowercaseRole,
       });
       if (userDoc) {
         const token = generateToken(
@@ -50,18 +50,16 @@ module.exports.registerUser = async (req, res) => {
           sameSite: 'none',
           secure: true,
         });
-        return res
-          .status(200)
-          .json({
-            message: 'Profile Created',
-            _id: userDoc._id,
-            name: userDoc.username,
-            role: userDoc.role
-          });
+        return res.status(200).json({
+          message: 'Profile Created',
+          _id: userDoc._id,
+          name: userDoc.username,
+          role: userDoc.role,
+        });
       } else {
         return res.status(400).json({
-            message: 'Invalid user',
-          });
+          message: 'Invalid user',
+        });
       }
     }
   } catch (err) {
@@ -75,14 +73,14 @@ module.exports.registerUser = async (req, res) => {
 // @access  Public
 
 module.exports.loginUser = async (req, res) => {
-const { username, password } = req.body;
+  const { username, password } = req.body;
   if (!username || !password) {
     console.log('Please provide all user details');
     res.status(400).json({ message: 'Please provide all user details' });
   }
   try {
     const userDoc = await user.findOne({ username });
-    if (userDoc && (await bcrypt.compare(password,userDoc.password))) {
+    if (userDoc && (await bcrypt.compare(password, userDoc.password))) {
       const token = generateToken(userDoc._id, userDoc.name, userDoc.role);
       res.cookie('jwt', token, {
         expires: new Date(Date.now() + 25892000000),
@@ -105,28 +103,27 @@ const { username, password } = req.body;
   }
 };
 
-
 // @desc    Get user details
 // @route   GET /api/user/me
 // @access  Private
 
 module.exports.getUserDetails = async (req, res) => {
-    try {
-        const userDoc = await user.findById(req.user._id);
-        if (!userDoc) {
-          return res.status(400).json({ message: 'User not found' });
-        }
-        return res.status(200).json({
-          id: userDoc._id,
-          username: userDoc.username,
-          email: userDoc.email,
-          gender: userDoc.gender,
-          role: userDoc.role,
-        });
-      } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Server error' });
-      }
+  try {
+    const userDoc = await user.findById(req.user._id);
+    if (!userDoc) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+    return res.status(200).json({
+      id: userDoc._id,
+      username: userDoc.username,
+      email: userDoc.email,
+      gender: userDoc.gender,
+      role: userDoc.role,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
 };
 
 // @desc    Update user details
@@ -134,7 +131,7 @@ module.exports.getUserDetails = async (req, res) => {
 // @access  Private
 
 module.exports.updateUserDetails = async (req, res) => {
-    const data = req.body;
+  const data = req.body;
   try {
     const userDoc = await user.findById(req.user.id);
     if (!userDoc) {
@@ -142,8 +139,8 @@ module.exports.updateUserDetails = async (req, res) => {
     }
     if (data.username) userDoc.username = data.username;
     if (data.email) userDoc.email = data.email;
-    if (data.age) userDoc.age=data.age;
-    if (data.gender) userDoc.gender=data.gender;
+    if (data.age) userDoc.age = data.age;
+    if (data.gender) userDoc.gender = data.gender;
     await userDoc.save();
     res.status(200).json({ message: 'Changes saved successfully' });
   } catch (error) {
@@ -152,17 +149,34 @@ module.exports.updateUserDetails = async (req, res) => {
   }
 };
 
-
 // @desc    Logout user
 // @route   POST /api/user/logout
 // @access  Private
 
 module.exports.logoutUser = async (req, res) => {
-  
-    res
+  res
     .cookie('jwt', '', {
       httpOnly: true,
     })
     .json({ message: 'Logout Successful' });
-    return res.status(200).json({message:"Logout Successful"});
+  return res.status(200).json({ message: 'Logout Successful' });
+};
+
+// @desc    Verify role
+// @route   GET /api/user/verify
+// @access  Private
+
+module.exports.getRole = (req, res) => {
+  try {
+    const {role}=req.user;
+    return res.status(200).json({
+      message: 'User Role Info',
+      role,
+    });
+  } catch (err) {
+    return res.status(400).json({
+      message: 'Cannot Get role',
+      error: JSON.stringify(err),
+    });
+  }
 };

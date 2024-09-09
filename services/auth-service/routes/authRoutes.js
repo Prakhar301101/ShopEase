@@ -9,6 +9,7 @@ router.post('/login',authController.loginUser);
 router.get('/me',authenticator,authController.getUserDetails);
 router.patch('/me',authenticator,authController.updateUserDetails);
 router.post('/logout',authenticator,authController.logoutUser);
+router.get('/verify',authenticator,authController.getRole);
 
 
 module.exports=router;
