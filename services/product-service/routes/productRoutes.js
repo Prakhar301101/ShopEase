@@ -1,15 +1,15 @@
 const express =require('express');
 const router=express.Router();
 const authorisation=require('../middlewares/authorisation');
-const { addProduct,addCategory,updateDetails,remove,displayAll,displaySelected,displayCategories } = require('../controllers/prodController');
+const { addProduct,addCategory,updateProdDetails,remove,display,displaySelected,displayCategories } = require('../controllers/prodController');
 
 
-router.get('/all',displayAll);
+router.get('/view',display);
+router.get('/view/:id',displaySelected);
 router.get('/categories',displayCategories);
-router.get('/get/:id',displaySelected);
 router.post('/addProduct',authorisation,addProduct);
 router.post('/addCategory',authorisation,addCategory);
-router.patch('/update/:id',authorisation,updateDetails);
+router.patch('/update/:id',authorisation,updateProdDetails);
 router.delete('/delete/:id',authorisation,remove)
 
 module.exports=router;

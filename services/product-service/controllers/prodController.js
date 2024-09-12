@@ -1,33 +1,91 @@
 const Product = require('../models/product');
 const Category = require('../models/category');
+const redisClient = require('../redisClient');
 
-// @desc    Display All products
-// @route   GET /api/product/view
+// @desc    Display All products or by query
+// @route   GET /api/products/view?q
 // @access  Public
 
-module.exports.displayAll = async (req, res) => {
+//View by category, price (min-max), attributes(color,size)  ratings average
+module.exports.display = async (req, res) => {
   try {
-    const products = await Product.find();
-    if (products.length > 0) {
-      console.log(products);
+    let queries = {};
+    const { category, priceMin, priceMax, color, size, ratingMin, top } = req.query;
+    // redis to cache cateogory IDs to reduce frequent MongoDB queries
+    if(category){
+    let categoryId=0;
+    redisClient.get(category,(err,cache)=>{
+      if(err){
+        console.error(err);
+      }
+      if(cache) console.log(JSON.parseInt(cache,10))
+    })
+    const categoryDoc=await Category.findOne({category});
+    if(!categoryDoc){
+      return res.status(400).json({message:"No such category"})
+    }
+    categoryId=categoryDoc._id;
+    redisClient.set(category,categoryId);
+    }
+
+    if (Object.keys(req.query).length > 0) {
+      // Category filter
+      if (category) queries.category = categoryId;
+
+      // Price filter
+      if (priceMin || priceMax) {
+        queries.price = {};
+        if (priceMin) queries.price.$gte = parseFloat(priceMin);
+        if (priceMax) queries.price.$lte = parseFloat(priceMax);
+      }
+
+      // Attributes filter (color and size)
+      if (color || size) {
+        queries.attributes = {};
+        if (color) queries.attributes.color = color;
+        if (size) queries.attributes.size = size;
+      }
+
+      // Ratings filter
+      if (ratingMin) {
+        queries.ratings = { average: { $gte: parseFloat(ratingMin) } };
+      }
+
+      let products = await Product.find(queries);
+
+      if (top) {
+        products = products.slice(0, parseInt(top, 10));
+      }
+
+      // Check if products were found
+      if (products.length === 0) {
+        return res.status(400).json({
+          message: 'No products matching your query parameters',
+        });
+      }
+
       return res.status(200).json({
         message: 'Success',
+        products,
       });
     } else {
-      return res.status(400).json({
-        message: 'No Products to display',
-      });
+      // Fetch all products if no query parameters are provided
+      const products = await Product.find();
+      if (products.length > 0)
+        return res.status(200).json({ message: 'Success', products });
+      else
+        return res.status(400).json({ message: 'No Products to display' });
     }
   } catch (err) {
-    console.log(err);
-    return res.status(400).json({
+    console.error(err);
+    return res.status(500).json({
       message: 'Error fetching request, Try again later',
     });
   }
 };
 
 // @desc    View all Categories
-// @route   GET /api/product/categories
+// @route   GET /api/products/categories
 // @access  Public
 
 module.exports.displayCategories = async (req, res) => {
@@ -35,7 +93,7 @@ module.exports.displayCategories = async (req, res) => {
     const categories = await Category.find();
     if (categories.length > 0) {
       return res.status(200).json({
-        categories
+        categories,
       });
     } else {
       return res.status(400).json({
@@ -43,7 +101,7 @@ module.exports.displayCategories = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return res.status(400).json({
       message: 'Error fetching request, Try again later',
     });
@@ -51,13 +109,32 @@ module.exports.displayCategories = async (req, res) => {
 };
 
 // @desc    Display Products with Criterias
-// @route   POST /api/product/view?q
+// @route   POST /api/products/view?q
 // @access  Public
 
-module.exports.displaySelected = async (req, res) => {};
+module.exports.displaySelected = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    return res.status(200).json({
+      message: 'Product retrieved successfully',
+      product,
+    });
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ message: 'Error fetching product, try again later' });
+  }
+};
 
 // @desc    Insert a new Category
-// @route   POST /api/product/addCategory
+// @route   POST /api/products/addCategory
 // @access  Private
 
 module.exports.addCategory = async (req, res) => {
@@ -70,22 +147,22 @@ module.exports.addCategory = async (req, res) => {
           message: 'Provide all details',
         });
       } else {
-        const doc =await Category.findOne({ name });
+        const doc = await Category.findOne({ name });
         if (doc) {
-            return res.status(400).json({
-                message: 'Category already Exists',
-              });
+          return res.status(400).json({
+            message: 'Category already Exists',
+          });
         } else {
-            const category_Doc=await Category.create({name,description});
-            if(category_Doc){
-                return res.status(200).json({
-                    message:'Creation Successful',
-                    id:category_Doc._id
-                })
-            }
-            else return res.status(400).json({
-                message:'Creation Failed!'
-            })
+          const category_Doc = await Category.create({ name, description });
+          if (category_Doc) {
+            return res.status(200).json({
+              message: 'Creation Successful',
+              id: category_Doc._id,
+            });
+          } else
+            return res.status(500).json({
+              message: 'Creation Failed!',
+            });
         }
       }
     } else {
@@ -94,7 +171,7 @@ module.exports.addCategory = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return res.status(400).json({
       message: 'Error fetching request, Try again later',
     });
@@ -102,19 +179,94 @@ module.exports.addCategory = async (req, res) => {
 };
 
 // @desc    Insert a new product
-// @route   POST /api/product/addProduct
+// @route   POST /api/products/addProduct
 // @access  Private
 
-module.exports.addProduct = async (req, res) => {};
+module.exports.addProduct = async (req, res) => {
+  const Role = req.user.role;
+  try {
+    if (Role === 'admin') {
+      const { name, description, price, category, quantity } = req.body;
+      let images = req.body.images;
+      let attributes = req.body.attributes;
+      let ratings = req.body.ratings;
+      if (!name || !description || !price || !category || !quantity) {
+        return res.status(400).json({
+          message: 'Provide all details',
+        });
+      } else {
+        const categoryDB = await Category.findOne({ name: category });
+        if (categoryDB) {
+          //can insert into DB
+          const productDB = await Product.create({
+            name,
+            description,
+            price,
+            category: categoryDB._id,
+            quantity,
+            images,
+            attributes,
+            ratings,
+          });
+          if (productDB) {
+            return res.status(200).json({
+              message: 'Product creation successful',
+              id: productDB._id,
+            });
+          } else {
+            return res.status(500).json({
+              message: 'Product creation Failed!',
+            });
+          }
+        } else {
+          //category does not exists
+          return res.status(400).json({
+            message: 'Given category does not exist, create category first',
+          });
+        }
+      }
+    } else {
+      return res.status(401).json({
+        message: 'Not Authorised!',
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({
+      message: 'Error fetching request, Try again later',
+    });
+  }
+};
 
 // @desc    Update a product by ID
-// @route   POST /api/product/update/:id
+// @route   POST /api/products/update/:id
 // @access  Private
 
-module.exports.updateDetails = async (req, res) => {};
+module.exports.updateProdDetails = async (req, res) => {};
 
 // @desc    Delete a product by ID
-// @route   POST /api/product/delete/:id
+// @route   POST /api/products/delete/:id
 // @access  Private
 
-module.exports.remove = async (req, res) => {};
+module.exports.remove = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    await Product.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      message: 'Product deleted successfully',
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      message: 'Error deleting product, try again later',
+    });
+  }
+};
