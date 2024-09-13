@@ -10,22 +10,24 @@ const redisClient = require('../redisClient');
 module.exports.display = async (req, res) => {
   try {
     let queries = {};
-    const { category, priceMin, priceMax, color, size, ratingMin, top } = req.query;
+    let categoryId = '';
+    const { category, priceMin, priceMax, color, size, ratingMin, top } =
+      req.query;
     // redis to cache cateogory IDs to reduce frequent MongoDB queries
-    if(category){
-    let categoryId=0;
-    redisClient.get(category,(err,cache)=>{
-      if(err){
-        console.error(err);
+    if (category) {
+      let cache=await redisClient.get(category);
+      if (cache!== null) {
+        categoryId = cache;
+        // console.log("here1",categoryId);
+      } else {
+        const categoryDoc = await Category.findOne({ name: category });
+        if (!categoryDoc) {
+          return res.status(400).json({ message: 'No such category' });
+        }
+        categoryId = categoryDoc._id.toString();
+        redisClient.set(category, categoryId);
+        // console.log("here2",categoryId);
       }
-      if(cache) console.log(JSON.parseInt(cache,10))
-    })
-    const categoryDoc=await Category.findOne({category});
-    if(!categoryDoc){
-      return res.status(400).json({message:"No such category"})
-    }
-    categoryId=categoryDoc._id;
-    redisClient.set(category,categoryId);
     }
 
     if (Object.keys(req.query).length > 0) {
@@ -41,16 +43,14 @@ module.exports.display = async (req, res) => {
 
       // Attributes filter (color and size)
       if (color || size) {
-        queries.attributes = {};
-        if (color) queries.attributes.color = color;
-        if (size) queries.attributes.size = size;
+        if (color)   queries['attributes.color'] = color;
+        if (size)    queries['attributes.size'] = size;
       }
 
       // Ratings filter
       if (ratingMin) {
         queries.ratings = { average: { $gte: parseFloat(ratingMin) } };
       }
-
       let products = await Product.find(queries);
 
       if (top) {
@@ -73,8 +73,7 @@ module.exports.display = async (req, res) => {
       const products = await Product.find();
       if (products.length > 0)
         return res.status(200).json({ message: 'Success', products });
-      else
-        return res.status(400).json({ message: 'No Products to display' });
+      else return res.status(400).json({ message: 'No Products to display' });
     }
   } catch (err) {
     console.error(err);
@@ -195,6 +194,15 @@ module.exports.addProduct = async (req, res) => {
           message: 'Provide all details',
         });
       } else {
+        const prodExists = await Product.find({ name, description });
+        if (prodExists) {
+          return res
+            .status(400)
+            .json({
+              message:
+                'Product with the same details already exists maybe try to update existing product first or change fields and try again',
+            });
+        }
         const categoryDB = await Category.findOne({ name: category });
         if (categoryDB) {
           //can insert into DB
