@@ -5,6 +5,7 @@ const cookieParser=require('cookie-parser');
 const mongoose=require('mongoose');
 const cors=require('cors');
 const PORT=process.env.PORT;
+const cartRoutes=require('./routes/cartRoutes');
 
 //middlewares
 app.use(express.json());
@@ -16,7 +17,7 @@ app.use(cors({
 
 
 //info route
-app.get('/',(req,res)=>{
+app.get('/info',(req,res)=>{
     res.json({
         message:"We are at the cart service",
         PORT
@@ -34,7 +35,7 @@ const connectToDB=()=>{
 }
 
 connectToDB();
-
+app.use(cartRoutes);
 
 
 app.listen(PORT,()=>{

@@ -12,7 +12,6 @@ const authorisation = async (req, res,next) => {
           if (response) {
             const data=await response.json();
             req.user = data;
-            console.log(req.user);
             next();
           } else {
             return res.status(400).json({
