@@ -4,10 +4,10 @@ const app=express();
 app.get('/',(req,res)=>{
     res.json({
         message:"We are at the payment service",
-        port:5004
+        port:5005
     })
 })
 
-app.listen(5004,()=>{
-    console.log(`Listening at PORT 5004`);
+app.listen(5005,()=>{
+    console.log(`Listening at PORT 5005`);
 });

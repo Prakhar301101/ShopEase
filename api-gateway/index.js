@@ -20,7 +20,8 @@ app.get('/info', (req, res) => {
 const AUTH_SERVICE = 'http://localhost:5001';
 const PRODUCT_SERVICE = 'http://localhost:5002';
 const CART_SERVICE = 'http://localhost:5003';
-const CHECKOUT_SERVICE = 'http://localhost:5004';
+const ORDER_SERVICE = 'http://localhost:5004';
+const PAYMENT_SERVICE = 'http://localhost:5005';
 
 app.use(rateLimiter);
 app.use(
@@ -54,11 +55,20 @@ app.use(
     },
   })
 );
-
 app.use(
-  '/api/checkout',
+  '/api/order',
   createProxyMiddleware({
-    target: CHECKOUT_SERVICE,
+    target: ORDER_SERVICE,
+    changeOrigin: true,
+    on: {
+      proxyReq: fixRequestBody,
+    },
+  })
+);
+app.use(
+  '/api/payment',
+  createProxyMiddleware({
+    target: PAYMENT_SERVICE,
     changeOrigin: true,
     on: {
       proxyReq: fixRequestBody,
