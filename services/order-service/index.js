@@ -26,12 +26,3 @@ app.listen(PORT,()=>{
 });
 
 
-/**
- * Order routes
- * POST /  create an order by calling cart
- * then it will make a reqeust to payment service and   * update the order detail accordingly
- * GET /id show order by id
- * GET / show all your orders
- * 
- * 
- */
