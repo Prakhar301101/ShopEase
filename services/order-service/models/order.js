@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
-const userSchema = new Schema(
+const orderSchema = new Schema(
   {
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -37,7 +37,7 @@ const userSchema = new Schema(
       },
       paymentStatus:{
         type:String,
-        enum:[pending,successful,failed],
+        enum:['pending','successful','failed'],
         required:true
       }
   },
@@ -46,5 +46,5 @@ const userSchema = new Schema(
   }
 );
 
-const userModel = model('User', userSchema);
-module.exports = userModel;
+const orderModel = model('Order', userSchema);
+module.exports = orderModel;
