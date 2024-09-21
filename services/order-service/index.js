@@ -5,7 +5,7 @@ const PORT=process.env.PORT;
 const cors=require('cors');
 const cookieParser=require('cookie-parser');
 const mongoose=require('mongoose');
-const appRoutes=require('./routes/orderRoutes');
+const orderRoutes=require('./routes/orderRoutes');
 
 app.use(express.json());
 app.use(cookieParser());

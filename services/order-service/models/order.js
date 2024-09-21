@@ -38,13 +38,21 @@ const orderSchema = new Schema(
       paymentStatus:{
         type:String,
         enum:['pending','successful','failed'],
+        default:'pending',
+        required:true
+      },
+      orderStatus:{
+        type:String,
+        enum:['pending','confirmed','shipped','delivered','cancelled'],
+        default:'pending',
         required:true
       }
+
   },
   {
     timestamps: true,
   }
 );
 
-const orderModel = model('Order', userSchema);
+const orderModel = model('Order', orderSchema);
 module.exports = orderModel;
