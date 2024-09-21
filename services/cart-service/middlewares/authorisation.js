@@ -1,5 +1,10 @@
 const authorisation = async (req, res,next) => {
   let token = req.cookies.jwt;
+  let bearer="";
+  if(req.headers.authorization){
+    bearer=req.headers.authorization.split("Bearer")[1];
+    token=bearer.trim();
+  }
   try {
     if (token) {
         const response = await fetch('http://localhost:5001/verify', {
