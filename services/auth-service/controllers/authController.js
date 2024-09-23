@@ -168,16 +168,18 @@ module.exports.logoutUser = async (req, res) => {
 
 module.exports.getRole = (req, res) => {
   try {
-    const {_id,role}=req.user;
+    const {_id,role,username,email}=req.user;
     return res.status(200).json({
       message: 'User Role Info',
       role,
-      userid:_id
+      userid:_id,
+      username,
+      email
     });
   } catch (err) {
-    return res.status(400).json({
-      message: 'Cannot Get role',
-      error: JSON.stringify(err),
+    console.error(err);
+    return res.status(500).json({
+      message: 'Error processing request'
     });
   }
 };

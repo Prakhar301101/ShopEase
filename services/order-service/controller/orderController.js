@@ -5,11 +5,49 @@ const Order = require('../models/order');
 // @access  Private
 
 module.exports.createOrder = async (req, res) => {
-  //get the cartId in the body
-  //extract data from it save in orderModel
-  //payment should be set as pending and as soon as you create a order
-  //hit the payment service and as you get the result save order with payment status
+  try{
+  const { userid } = req.user;
+  const { address,cardDetails } =req.body;
+  const url='http://localhost:5003/';
+  const response=await fetch(url,{
+    credentials: 'include',
+        headers:{
+          'Authorization': `Bearer ${req.cookies.jwt}`, 
+        }
+  });
+  if(!response.ok){
+      return res.status(400).json({message:'Error accessing cart'});
+  }
+  const {cartDoc}=await response.json();
+  let products=[];
+  cartDoc.products.forEach(prod => {
+    products.push({
+      prouctId:prod.productId,
+      quantity:prod.quantity,
+      price:prod.price
+    })
+  });
+  const order=new Order({
+    user:req.user.userid,
+    products,
+    totalPrice:cartDoc.totalPrice,
+    address,
+    paymentStatus:'pending',
+    orderStatus:'pending'
+  });
+  await order.save();
+
+  //call payment service depending upon result
+  //basically i want to call the createCharge route 
+  //change payment status and orderstatus
+  //save again
   return res.status(200).json({ message: 'Order creation route' });
+}catch(err){
+  console.error(err);
+  return res.status(500).json({
+    message: 'Error fetching request, Try again later',
+  });
+}
 };
 
 // @desc    Get Order details by Id
