@@ -5,49 +5,76 @@ const Order = require('../models/order');
 // @access  Private
 
 module.exports.createOrder = async (req, res) => {
-  try{
-  const { userid } = req.user;
-  const { address,cardDetails } =req.body;
-  const url='http://localhost:5003/';
-  const response=await fetch(url,{
-    credentials: 'include',
-        headers:{
-          'Authorization': `Bearer ${req.cookies.jwt}`, 
-        }
-  });
-  if(!response.ok){
-      return res.status(400).json({message:'Error accessing cart'});
-  }
-  const {cartDoc}=await response.json();
-  let products=[];
-  cartDoc.products.forEach(prod => {
-    products.push({
-      prouctId:prod.productId,
-      quantity:prod.quantity,
-      price:prod.price
+  try {
+    const { userid } = req.user;
+    const { address } = req.body;
+    const url = 'http://localhost:5003/';
+    const response = await fetch(url, {
+      credentials: 'include',
+      headers: {
+        Authorization: `Bearer ${req.cookies.jwt}`,
+      },
+    });
+    if (!response.ok) {
+      return res.status(400).json({ message: 'Error accessing cart' });
+    }
+    const { cartDoc } = await response.json();
+    let products = [];
+    cartDoc.products.forEach((prod) => {
+      products.push({
+        productId: prod.productId,
+        quantity: prod.quantity,
+        price: prod.price,
+      });
+    });
+    const order = new Order({
+      user: req.user.userid,
+      products,
+      totalPrice: Math.ceil(cartDoc.totalPrice),
+      address,
+      paymentStatus: 'pending',
+      orderStatus: 'pending',
+    });
+    await order.save();
+    const paymentResponse = await fetch('http://localhost:5005/check-out', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Authorization: `Bearer ${req.cookies.jwt}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ address, totalPrice: order.totalPrice }),
+    });
+    const paymentData = await paymentResponse.json();
+    console.log(paymentData);
+    const { message, receipt} = paymentData;
+    if (message === 'Failed') {
+      order.paymentStatus='failed';
+      await order.save();
+      return res.status(400).json({
+        message: 'Payment Failed',
+      });
+    }
+    order.paymentStatus='successful';
+    order.orderStatus='confirmed';
+    await order.save();
+    await fetch('http://localhost:5003/clear',{
+      method:'DELETE',
+      credentials:'include',
+      headers:{
+        Authorization:`Bearer ${req.cookies.jwt}`
+      }
     })
-  });
-  const order=new Order({
-    user:req.user.userid,
-    products,
-    totalPrice:cartDoc.totalPrice,
-    address,
-    paymentStatus:'pending',
-    orderStatus:'pending'
-  });
-  await order.save();
-
-  //call payment service depending upon result
-  //basically i want to call the createCharge route 
-  //change payment status and orderstatus
-  //save again
-  return res.status(200).json({ message: 'Order creation route' });
-}catch(err){
-  console.error(err);
-  return res.status(500).json({
-    message: 'Error fetching request, Try again later',
-  });
-}
+    return res.status(200).json({
+      message: 'Payment Successful',
+      receipt
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      message: 'Error fetching request, Try again later',
+    });
+  }
 };
 
 // @desc    Get Order details by Id

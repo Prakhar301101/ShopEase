@@ -14,7 +14,6 @@ app.use(cors({
     credentials:true
 }));
 
-//DB connections
 
 app.get('/info',(req,res)=>{
     res.json({
