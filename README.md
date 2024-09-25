@@ -12,6 +12,12 @@ This is way better than a **monolithic** setup, where everything’s tangled tog
 
 By splitting everything into manageable, specialized services, you keep things running smoothly and efficiently. It’s like having a perfectly organized mall where each store does its own thing, but they all work together to create an amazing shopping experience!
 
+
+## Architecture Overview
+
+![Ecommerce Microservices Architecture](./images/architecture.png)
+
+
 ## Technologies Used
 
 - **Node.js**: JavaScript runtime used to build the backend services.
