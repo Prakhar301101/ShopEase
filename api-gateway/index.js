@@ -17,11 +17,11 @@ app.get('/info', (req, res) => {
   });
 });
 
-const AUTH_SERVICE = 'http://localhost:5001';
-const PRODUCT_SERVICE = 'http://localhost:5002';
-const CART_SERVICE = 'http://localhost:5003';
-const ORDER_SERVICE = 'http://localhost:5004';
-const PAYMENT_SERVICE = 'http://localhost:5005';
+const AUTH_SERVICE = 'http://auth-service:5001';
+const PRODUCT_SERVICE = 'http://product-service:5002';
+const CART_SERVICE = 'http://cart-service:5003';
+const ORDER_SERVICE = 'http://order-service:5004';
+const PAYMENT_SERVICE = 'http://payment-service:5005';
 
 app.use(rateLimiter);
 app.use(
@@ -36,7 +36,7 @@ app.use(
 );
 
 app.use(
-  '/api/products',
+  '/api/product',
   createProxyMiddleware({
     target: PRODUCT_SERVICE,
     changeOrigin: true,

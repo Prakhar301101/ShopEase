@@ -41,7 +41,7 @@ module.exports.addToCart = async (req, res) => {
         totalPrice: 0,
       });
     }
-    const url = `http://localhost:5002/view/${productId}`;
+    const url = `http://product-service:5002/view/${productId}`;
     const response = await fetch(url);
 
     if (!response.ok) {

@@ -1,0 +1,16 @@
+# Node modules
+node_modules
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Git files
+.git
+.gitignore
+
+# Build artifacts
+dist
+build

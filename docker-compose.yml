@@ -1,0 +1,48 @@
+services:
+  auth-service:
+    build:
+      context: ./services/auth-service
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./services/auth-service/.env
+
+  product-service:
+    build:
+      context: ./services/product-service
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./services/product-service/.env
+
+  cart-service:
+    build:
+      context: ./services/cart-service
+    ports:
+      - "5003:5003"
+    env_file:
+      - ./services/cart-service/.env
+
+  order-service:
+    build:
+      context: ./services/order-service
+    ports:
+      - "5004:5004"
+    env_file:
+      - ./services/order-service/.env
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+    ports:
+      - "5005:5005"
+    env_file:
+      - ./services/payment-service/.env
+
+  api-gateway:
+    build:
+      context: ./api-gateway 
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./api-gateway/.env

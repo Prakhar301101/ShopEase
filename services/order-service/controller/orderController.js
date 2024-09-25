@@ -8,7 +8,7 @@ module.exports.createOrder = async (req, res) => {
   try {
     const { userid } = req.user;
     const { address } = req.body;
-    const url = 'http://localhost:5003/';
+    const url = 'http://cart-service:5003/';
     const response = await fetch(url, {
       credentials: 'include',
       headers: {
@@ -36,7 +36,7 @@ module.exports.createOrder = async (req, res) => {
       orderStatus: 'pending',
     });
     await order.save();
-    const paymentResponse = await fetch('http://localhost:5005/check-out', {
+    const paymentResponse = await fetch('http://payment-service:5005/check-out', {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -46,7 +46,6 @@ module.exports.createOrder = async (req, res) => {
       body: JSON.stringify({ address, totalPrice: order.totalPrice }),
     });
     const paymentData = await paymentResponse.json();
-    console.log(paymentData);
     const { message, receipt} = paymentData;
     if (message === 'Failed') {
       order.paymentStatus='failed';
@@ -58,7 +57,7 @@ module.exports.createOrder = async (req, res) => {
     order.paymentStatus='successful';
     order.orderStatus='confirmed';
     await order.save();
-    await fetch('http://localhost:5003/clear',{
+    await fetch('http://cart-service:5003/clear',{
       method:'DELETE',
       credentials:'include',
       headers:{

@@ -7,7 +7,8 @@ const authorisation = async (req, res,next) => {
   }
   try {
     if (token) {
-        const response = await fetch('http://localhost:5001/verify', {
+        const url='http://auth-service:5001';
+        const response = await fetch(url+'/verify', {
             method: 'GET',
             credentials: 'include',
             headers:{

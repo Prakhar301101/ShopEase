@@ -154,12 +154,12 @@ module.exports.updateUserDetails = async (req, res) => {
 // @access  Private
 
 module.exports.logoutUser = async (req, res) => {
-  res
+  return res
     .cookie('jwt', '', {
       httpOnly: true,
     })
+    .status(200)
     .json({ message: 'Logout Successful' });
-  return res.status(200).json({ message: 'Logout Successful' });
 };
 
 // @desc    Verify role
@@ -168,18 +168,18 @@ module.exports.logoutUser = async (req, res) => {
 
 module.exports.getRole = (req, res) => {
   try {
-    const {_id,role,username,email}=req.user;
+    const { _id, role, username, email } = req.user;
     return res.status(200).json({
       message: 'User Role Info',
       role,
-      userid:_id,
+      userid: _id,
       username,
-      email
+      email,
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({
-      message: 'Error processing request'
+      message: 'Error processing request',
     });
   }
 };
